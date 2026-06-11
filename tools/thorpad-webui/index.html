@@ -61,14 +61,42 @@
       <div id="buttonProps">
         <label class="full">Label <input type="text" id="propLabel"></label>
 
+        <fieldset class="style-editor">
+          <legend>Style</legend>
+          <div class="grid2">
+            <label>Fill color <input type="color" id="propColor" value="#1F2335"></label>
+            <label>Text color <input type="color" id="propTextColor" value="#C0CAF5"></label>
+            <label>Corners
+              <select id="propRadius">
+                <option value="0">0 — square</option>
+                <option value="1">1 — small</option>
+                <option value="2">2 — medium</option>
+                <option value="3">3 — round</option>
+              </select>
+            </label>
+            <label>Font size <input type="number" id="propFontSize" min="6" max="80" step="1" value="20"></label>
+          </div>
+          <label class="full">Opacity <span id="propAlphaVal" class="rangeval">100%</span>
+            <input type="range" id="propAlpha" min="0" max="1" step="0.05" value="1">
+          </label>
+        </fieldset>
+
         <fieldset class="action-editor">
           <legend>Action</legend>
           <label class="full">Type
             <select id="actionType">
-              <option value="key">key</option>
-              <option value="text">text</option>
-              <option value="mouse">mouse</option>
-              <option value="macro">macro</option>
+              <optgroup label="Send to host">
+                <option value="key">key</option>
+                <option value="text">text</option>
+                <option value="mouse">mouse</option>
+                <option value="macro">macro</option>
+              </optgroup>
+              <optgroup label="On-device (special)">
+                <option value="keyboard">keyboard — toggle on-screen keys</option>
+                <option value="zoom">zoom — toggle top-screen zoom</option>
+                <option value="settings">settings — open layout manager</option>
+                <option value="reload">reload — reload this layout</option>
+              </optgroup>
             </select>
           </label>
 
@@ -113,6 +141,17 @@
               </select>
               <button id="macroAddBtn" type="button">+ Add step</button>
             </div>
+          </div>
+
+          <!-- ZOOM -->
+          <div class="action-pane" id="pane-zoom" hidden>
+            <label class="full">Zoom scale <input type="number" id="zoomScale" min="1" max="5" step="0.25" value="2"></label>
+            <p class="pane-note">Toggles the top-screen video between 1× and this scale.</p>
+          </div>
+
+          <!-- keyboard / settings / reload: no options -->
+          <div class="action-pane" id="pane-none" hidden>
+            <p class="pane-note">No options — this action is handled on the device.</p>
           </div>
         </fieldset>
       </div>

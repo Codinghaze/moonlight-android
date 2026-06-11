@@ -6,6 +6,13 @@ and exporting/importing them in the exact JSON format the Android app reads.
 
 No build step, no framework, no server. Plain HTML + CSS + vanilla JS.
 
+## Live version
+
+Hosted on GitHub Pages — no download needed:
+**https://codinghaze.github.io/moonlight-android/**
+
+(Auto-deploys from `tools/thorpad-webui/` on every push to `main`.)
+
 ## Files
 
 - `index.html` — the app (open this)
@@ -40,6 +47,10 @@ python3 -m http.server 8080
    - Numeric `x / y / w / h` (fractions 0..1) — editing these moves/resizes the
      element on the canvas, and dragging updates the numbers. Two-way bound.
    - `label` (buttons only)
+   - **Style** (buttons only): `fill color`, `text color`, `corners` (0–3
+     roundness), `font size`, and an `opacity` slider. These map to the
+     `color / textColor / radius / fontSize / alpha` JSON keys; defaults are
+     omitted from the export so untouched buttons stay clean.
    - **Action editor** (buttons only): pick the action type and fill in details:
      - `key` — key picker (letters, digits, or named keys like `enter`, `esc`,
        `f5`, `volup`, …) plus `shift / ctrl / alt / meta` modifier checkboxes.
@@ -47,6 +58,9 @@ python3 -m http.server 8080
      - `mouse` — `left / right / middle` click.
      - `macro` — an ordered list of steps; add `key / text / mouse / delay`
        steps, reorder with the arrows, remove with `×`.
+     - **On-device specials** (no host needed): `keyboard` (toggle the on-screen
+       keys), `zoom` (toggle top-screen zoom — set the scale), `settings` (open
+       the layout manager), `reload` (re-read this layout's JSON).
 4. **Top-level fields** — layout `name` and `trackpadSensitivity` in the top bar.
 5. **JSON preview** (far right) updates live as you edit.
 6. **Export** downloads `<name>.json`. **Import** lets you paste JSON or upload a

@@ -154,8 +154,13 @@ button.danger:hover { background: rgba(229,83,75,0.12); }
 .props label.full input, .props label.full select { width: 100%; margin-top: 4px; }
 .props input, .props select { width: 100%; }
 
-.action-editor { border: 1px solid var(--line); border-radius: 8px; padding: 12px; margin-top: 6px; }
-.action-editor legend { padding: 0 6px; color: var(--text); font-weight: 600; }
+.action-editor, .style-editor { border: 1px solid var(--line); border-radius: 8px; padding: 12px; margin-top: 6px; }
+.action-editor legend, .style-editor legend { padding: 0 6px; color: var(--text); font-weight: 600; }
+.style-editor { margin-bottom: 12px; }
+.style-editor input[type="color"] { width: 100%; height: 32px; padding: 2px; cursor: pointer; background: var(--panel2); }
+.style-editor input[type="range"] { width: 100%; accent-color: var(--accent); margin-top: 4px; }
+.rangeval { color: var(--muted); font-variant-numeric: tabular-nums; }
+.pane-note { color: var(--muted); font-size: 12px; margin: 8px 0 0; }
 .mods { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 6px; }
 .mods label.chk, label.chk { flex-direction: row; align-items: center; gap: 5px; }
 

@@ -89,6 +89,7 @@
         if (el.h <= 0) el.h = 0.1;
         if (e.type === "button") {
           el.label = typeof e.label === "string" ? e.label : "";
+          copyStyle(el, e);
           el.action = normalizeAction(e.action);
         }
         state.elements.push(el);
@@ -98,6 +99,17 @@
     $("layoutName").value = state.name;
     $("trackpadSensitivity").value = state.trackpadSensitivity;
     renderAll();
+  }
+
+  // Copy optional per-button styling off an imported element, with light validation.
+  function copyStyle(el, e) {
+    if (typeof e.color === "string" && e.color) el.color = e.color;
+    if (typeof e.textColor === "string" && e.textColor) el.textColor = e.textColor;
+    if (e.radius != null && !isNaN(Number(e.radius)))
+      el.radius = Math.max(0, Math.min(3, Math.round(Number(e.radius))));
+    if (e.fontSize != null && !isNaN(Number(e.fontSize))) el.fontSize = Number(e.fontSize);
+    if (e.alpha != null && !isNaN(Number(e.alpha)))
+      el.alpha = Math.max(0, Math.min(1, Number(e.alpha)));
   }
 
   function normalizeAction(a) {
@@ -114,6 +126,11 @@
       case "macro":
         var steps = Array.isArray(a.steps) ? a.steps.map(normalizeStep).filter(Boolean) : [];
         return { type: "macro", steps: steps };
+      case "keyboard": return { type: "keyboard" };
+      case "settings": return { type: "settings" };
+      case "reload": return { type: "reload" };
+      case "zoom":
+        return { type: "zoom", scale: (a.scale != null && !isNaN(Number(a.scale))) ? Number(a.scale) : 2 };
       default:
         return { type: "key", key: "A" };
     }
@@ -134,6 +151,12 @@
       var o = { type: e.type, x: round(e.x), y: round(e.y), w: round(e.w), h: round(e.h) };
       if (e.type === "button") {
         o.label = e.label || "";
+        // Only emit style keys when they differ from the app's defaults, keeping JSON tidy.
+        if (e.color) o.color = e.color;
+        if (e.textColor) o.textColor = e.textColor;
+        if (e.radius) o.radius = e.radius;
+        if (typeof e.fontSize === "number" && e.fontSize !== 20) o.fontSize = e.fontSize;
+        if (typeof e.alpha === "number" && e.alpha < 1) o.alpha = round(e.alpha);
         o.action = serializeAction(e.action);
       }
       return o;
@@ -157,9 +180,31 @@
         })
       };
     }
+    if (a.type === "keyboard") return { type: "keyboard" };
+    if (a.type === "settings") return { type: "settings" };
+    if (a.type === "reload") return { type: "reload" };
+    if (a.type === "zoom") return { type: "zoom", scale: (typeof a.scale === "number" ? a.scale : 2) };
     return { type: "key", key: "A" };
   }
   function round(n) { return Math.round(n * 1000) / 1000; }
+
+  // CSS background string for a fill color + 0..1 alpha. Hex is converted to rgba so
+  // alpha shows in the preview; named colors are passed through (alpha not applied).
+  function styleBg(color, alpha) {
+    var hex = (color || "").charAt(0) === "#" ? color.slice(1) : color;
+    if (/^[0-9a-f]{6}$/i.test(hex)) {
+      var r = parseInt(hex.slice(0, 2), 16),
+          g = parseInt(hex.slice(2, 4), 16),
+          b = parseInt(hex.slice(4, 6), 16);
+      return "rgba(" + r + "," + g + "," + b + "," + (alpha == null ? 1 : alpha) + ")";
+    }
+    return color || "#1F2335";
+  }
+  // An <input type=color> needs a #rrggbb value; fall back to a default for names/blank.
+  function toHexInput(c, dflt) {
+    if (typeof c === "string" && /^#?[0-9a-f]{6}$/i.test(c)) return c.charAt(0) === "#" ? c : ("#" + c);
+    return dflt;
+  }
 
   // ============================================================
   // Rendering the canvas
@@ -184,6 +229,13 @@
       var lbl = document.createElement("div");
       lbl.className = "el-label";
       lbl.textContent = e.type === "trackpad" ? "TRACKPAD" : (e.label || "(button)");
+      // Reflect per-button styling in the preview (approximate; the device renders for real).
+      if (e.type === "button") {
+        div.style.background = styleBg(e.color || "#1F2335", e.alpha == null ? 1 : e.alpha);
+        div.style.borderRadius = (e.radius ? e.radius * 6 : 0) + "px";
+        if (e.textColor) lbl.style.color = e.textColor;
+        if (typeof e.fontSize === "number") lbl.style.fontSize = Math.max(8, Math.round(e.fontSize * 0.75)) + "px";
+      }
       div.appendChild(lbl);
 
       var handle = document.createElement("div");
@@ -273,6 +325,13 @@
     syncPropInputs();
     if (e.type === "button") {
       $("propLabel").value = e.label || "";
+      $("propColor").value = toHexInput(e.color, "#1F2335");
+      $("propTextColor").value = toHexInput(e.textColor, "#C0CAF5");
+      $("propRadius").value = String(e.radius || 0);
+      $("propFontSize").value = (e.fontSize != null ? e.fontSize : 20);
+      var al = (e.alpha != null ? e.alpha : 1);
+      $("propAlpha").value = al;
+      $("propAlphaVal").textContent = Math.round(al * 100) + "%";
       renderActionEditor(e.action);
     }
   }
@@ -321,11 +380,19 @@
       $("mouseButton").value = action.button || "left";
     } else if (action.type === "macro") {
       renderMacroSteps(action.steps || []);
+    } else if (action.type === "zoom") {
+      $("zoomScale").value = (action.scale != null ? action.scale : 2);
     }
+    // keyboard / settings / reload have no fields (pane-none).
+  }
+  // keyboard/settings/reload share the "none" (no-options) pane.
+  function paneFor(type) {
+    return (type === "keyboard" || type === "settings" || type === "reload") ? "none" : type;
   }
   function showPane(type) {
-    ["key", "text", "mouse", "macro"].forEach(function (t) {
-      $("pane-" + t).hidden = (t !== type);
+    var target = paneFor(type);
+    ["key", "text", "mouse", "macro", "zoom", "none"].forEach(function (t) {
+      $("pane-" + t).hidden = (t !== target);
     });
   }
 
@@ -349,7 +416,25 @@
       var existing = (e.action && e.action.type === "macro") ? e.action.steps : [];
       return { type: "macro", steps: existing };
     }
+    if (type === "keyboard") return { type: "keyboard" };
+    if (type === "settings") return { type: "settings" };
+    if (type === "reload") return { type: "reload" };
+    if (type === "zoom") return { type: "zoom", scale: Number($("zoomScale").value) || 2 };
     return { type: "key", key: "A" };
+  }
+
+  // A fresh default action of any type (used when the user switches the action type).
+  function newAction(type) {
+    switch (type) {
+      case "text": return { type: "text", text: "" };
+      case "mouse": return { type: "mouse", button: "left" };
+      case "macro": return { type: "macro", steps: [] };
+      case "keyboard": return { type: "keyboard" };
+      case "settings": return { type: "settings" };
+      case "reload": return { type: "reload" };
+      case "zoom": return { type: "zoom", scale: 2 };
+      default: return { type: "key", key: "A" };
+    }
   }
 
   function commitAction() {
@@ -609,6 +694,37 @@
       renderCanvas(); renderJSON();
     };
 
+    // style controls
+    function cur() { return state.elements[state.selected]; }
+    $("propColor").oninput = function () {
+      var e = cur(); if (!e) return;
+      e.color = $("propColor").value;
+      renderCanvas(); renderJSON();
+    };
+    $("propTextColor").oninput = function () {
+      var e = cur(); if (!e) return;
+      e.textColor = $("propTextColor").value;
+      renderCanvas(); renderJSON();
+    };
+    $("propRadius").onchange = function () {
+      var e = cur(); if (!e) return;
+      e.radius = Number($("propRadius").value) || 0;
+      renderCanvas(); renderJSON();
+    };
+    $("propFontSize").oninput = function () {
+      var e = cur(); if (!e) return;
+      var v = Number($("propFontSize").value);
+      e.fontSize = isNaN(v) ? 20 : v;
+      renderCanvas(); renderJSON();
+    };
+    $("propAlpha").oninput = function () {
+      var e = cur(); if (!e) return;
+      var v = Number($("propAlpha").value);
+      e.alpha = isNaN(v) ? 1 : v;
+      $("propAlphaVal").textContent = Math.round(e.alpha * 100) + "%";
+      renderCanvas(); renderJSON();
+    };
+
     // action editor
     $("actionType").onchange = function () {
       var type = $("actionType").value;
@@ -620,7 +736,7 @@
         e.action = { type: "macro", steps: (e.action && e.action.type === "macro") ? e.action.steps : [] };
         renderMacroSteps(e.action.steps);
       } else {
-        e.action = newStep(type);
+        e.action = newAction(type);
         renderActionEditor(e.action);
       }
       renderJSON();
@@ -629,6 +745,7 @@
     document.querySelectorAll("#pane-key .mod").forEach(function (cb) { cb.onchange = commitAction; });
     $("actionText").oninput = commitAction;
     $("mouseButton").onchange = commitAction;
+    $("zoomScale").oninput = commitAction;
 
     $("macroAddBtn").onclick = function () {
       var e = state.elements[state.selected];

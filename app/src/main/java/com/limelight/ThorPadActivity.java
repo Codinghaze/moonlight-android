@@ -380,13 +380,15 @@ public class ThorPadActivity extends AppCompatActivity {
         //   "textColor": "#C0CAF5"    label color (hex or named, e.g. "red")
         //   "color": "#1F2335"        button fill color
         //   "radius": 0|1|2|3         corner roundness (0 = square, 3 = most round)
+        //   "alpha": 0..1             fill opacity (lower = more see-through; label stays crisp)
         b.setTextSize(TypedValue.COMPLEX_UNIT_SP,
                 (float) el.optDouble("fontSize", el.optDouble("textSize", 20)));
         b.setTextColor(parseColorOr(el.optString("textColor", ""), Color.parseColor("#C0CAF5")));
 
         GradientDrawable bg = new GradientDrawable();
         bg.setShape(GradientDrawable.RECTANGLE);
-        bg.setColor(parseColorOr(el.optString("color", ""), Color.parseColor("#1F2335")));
+        int fill = parseColorOr(el.optString("color", ""), Color.parseColor("#1F2335"));
+        bg.setColor(applyAlpha(fill, el.optDouble("alpha", 1.0)));
         bg.setCornerRadius(radiusPx(el.optInt("radius", 0)));
         b.setBackground(bg);
 
@@ -717,6 +719,15 @@ public class ThorPadActivity extends AppCompatActivity {
     /** Corner radius "level" → pixels. 0 = square; 1/2/3 (and up) get progressively rounder. */
     private float radiusPx(int level) {
         return level <= 0 ? 0f : dp(8 * level);
+    }
+
+    /** Override a color's alpha from a 0..1 fraction (1 = opaque). Applied to the fill only. */
+    private static int applyAlpha(int color, double alpha) {
+        if (alpha >= 1.0) {
+            return color;
+        }
+        int a = (int) Math.round(Math.max(0, Math.min(1, alpha)) * 255);
+        return (color & 0x00FFFFFF) | (a << 24);
     }
 
     /** Parse "#RRGGBB", "RRGGBB", or a named color ("red"); fall back if blank/invalid. */

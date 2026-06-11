@@ -1,0 +1,36 @@
+name: Deploy ThorPad Designer to Pages
+
+# Publishes the static layout designer (tools/thorpad-webui) to GitHub Pages.
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'tools/thorpad-webui/**'
+      - '.github/workflows/pages.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Allow one concurrent deployment; newer pushes supersede in-flight ones.
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          # Serve the designer at the site root.
+          path: tools/thorpad-webui
+      - id: deployment
+        uses: actions/deploy-pages@v4

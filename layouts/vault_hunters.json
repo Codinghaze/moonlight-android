@@ -21,16 +21,16 @@
       "action": { "type": "key", "key": "4" } },
 
     { "type": "button", "x": 0.056, "y": 0.78, "w": 0.18, "h": 0.18,
-      "label": "❤️", "color": "#E5484D", "radius": 3, "fontSize": 26,
+      "label": "❤️", "color": "#E5484D", "radius": 3, "fontSize": 26, "alpha": 0.7,
       "action": { "type": "key", "key": "c" } },
     { "type": "button", "x": 0.292, "y": 0.78, "w": 0.18, "h": 0.18,
-      "label": "🚀", "color": "#3E63DD", "radius": 3, "fontSize": 26,
+      "label": "🚀", "color": "#3E63DD", "radius": 3, "fontSize": 26, "alpha": 0.7,
       "action": { "type": "key", "key": "z" } },
     { "type": "button", "x": 0.528, "y": 0.78, "w": 0.18, "h": 0.18,
-      "label": "🔥", "color": "#E8770E", "radius": 3, "fontSize": 26,
+      "label": "🔥", "color": "#E8770E", "radius": 3, "fontSize": 26, "alpha": 0.7,
       "action": { "type": "key", "key": "f" } },
     { "type": "button", "x": 0.764, "y": 0.78, "w": 0.18, "h": 0.18,
-      "label": "⛏️", "color": "#8B6D5C", "radius": 3, "fontSize": 26,
+      "label": "⛏️", "color": "#8B6D5C", "radius": 3, "fontSize": 26, "alpha": 0.7,
       "action": { "type": "key", "key": "x" } }
   ]
 }
