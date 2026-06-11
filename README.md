@@ -15,87 +15,143 @@ Pair it with [Apollo](https://github.com/ClassicOldSong/Apollo) / [Sunshine](htt
 
 ---
 
-## Upstream: Artemis Android
+## How the dual screen works
 
-Previously named Moonlight Noir
+Everything Artemis already does happens on the **top** screen (`displayId 0`). The only new
+piece is **ThorPad**: a control surface Hati launches onto the Thor's **bottom** screen
+(the secondary display) the moment a stream starts.
 
-An open source client for [Apollo](https://github.com/ClassicOldSong/Apollo)/[Sunshine](https://github.com/LizardByte/Sunshine).
+When a stream comes up on the primary display, [Game.java](app/src/main/java/com/limelight/Game.java)
+calls `maybeLaunchThorPad()`, which finds the secondary display and starts
+[ThorPadActivity](app/src/main/java/com/limelight/ThorPadActivity.java) on it via
+`ActivityOptions.setLaunchDisplayId()`. The pad shares the stream's live `NvConnection`, so every
+touch, button, and macro is dispatched to the host over the existing GameStream input channel — no
+second connection, no host-side agent. If there's no secondary display (i.e. you're not on a Thor),
+ThorPad simply doesn't launch and Hati behaves like stock Artemis.
 
-Artemis Android will allow you to stream your collection of games from your Windows PC to your Android device,
-whether in your own home or over the internet.
+## ThorPad control pad
 
-Artemis is currently the best fork of Moonlight with loads of optimizations for office usage.
+ThorPad renders a control surface from a JSON layout. Layouts are plain files you can drop in over
+USB or edit on-device — **no rebuild needed**.
 
-A more seamless experience with virtual display will be Artemis paired with [Apollo](https://github.com/ClassicOldSong/Apollo).
+### Per-app layouts
 
-# Features
+Layout files live under `<externalFilesDir>/thorpad/` on the device
+(`Android/data/dev.codinghaze.hati/files/thorpad/`). They're resolved **per streamed app**:
 
-If you switch back to the main stream version, you'll be missing the following awesome features which are very unlikely to be added there:
+1. `<app_name>.json` — e.g. streaming **Vault Hunters** looks for `vault_hunters.json`
+2. `default.json` — fallback for any app without its own layout
+3. a built-in default baked into the app
 
-1. Custom virtual buttons with import and export support.
-2. [Custom resolutions](https://github.com/moonlight-stream/moonlight-android/pull/1349).
-3. Custom bitrates.
-4. [Multiple mouse mode switching](https://github.com/moonlight-stream/moonlight-android/pull/1304) (normal mouse, [multi-touch](https://github.com/moonlight-stream/moonlight-android/pull/1364), touchpad, disabled, local cursor mode).
-5. Optimized virtual gamepad skins and free joystick.
-6. External monitor mode.
-7. Joycon D-pad support.
-8. Simplified performance information display.
-9. [Game back menu](https://github.com/moonlight-stream/moonlight-android/pull/1171).
-10. Custom shortcut commands.
-11. Easy soft keyboard switching.
-12. Portrait mode.
-13. Display on top mode, useful for foldable phones.
-14. [Virtual touchpad space and sensitivity adjustment](https://github.com/moonlight-stream/moonlight-android/issues/1348#issuecomment-2236344729) for playing right-click view games, such as Warcraft.
-15. Force use device's own vibration motor (in case your gamepad's vibration is not effective).
-16. Gamepad debugging page to view gamepad vibration and gyroscope information, as well as Android kernel version information.
-17. Trackpad tap/scrolling support
-18. Natural track pad mode with touch screen
-19. Non-QWERTY keyboard layout support
-20. Quick Meta key with physical BACK button
-21. Frame rate lock fix for some devices
-22. Video scale mode: Fit/Fill/Stretch
-23. View pan/zoom support
-24. Rotate screen in-game
-25. Add option to quit app directly
-26. Samsung DeX scrolling support
-27. Proper click/scroll/right-click for trackpad on generic Android tablet when using local cursor
-28. Virtual Display integration with [Apollo](https://github.com/ClassicOldSong/Apollo)
-29. Server Command integration with [Apollo](https://github.com/ClassicOldSong/Apollo)
-30. Clipboard sync (requires Apollo)
-31. SBS 3D for external Displays (Using AI MiDaS v2 Lite)
+### Layout format
 
-# Disclaimer
+Elements are positioned with **normalized** coordinates — `x / y / w / h` are fractions `0..1` of
+the screen, so a layout is resolution-independent. Two element types:
 
-This is the `go away` version of Moonlight Android.
+- **`trackpad`** — a mouse-movement area (drag to move the cursor, tap to click).
+- **`button`** — a labeled key that fires an **action**.
 
-I got kicked from Moonlight and Sunshine's Discord server literally for helping people out.
+```json
+{
+  "name": "Vault Hunters",
+  "trackpadSensitivity": 1.4,
+  "elements": [
+    { "type": "trackpad", "x": 0, "y": 0, "w": 1, "h": 0.5 },
+    { "type": "button", "x": 0.025, "y": 0.775, "w": 0.18, "h": 0.2,
+      "label": "❤️", "action": { "type": "key", "key": "c" } },
+    { "type": "button", "x": 0.6, "y": 0.775, "w": 0.18, "h": 0.2,
+      "label": "🔥", "action": { "type": "key", "key": "f" } }
+  ]
+}
+```
 
-This is what I got for finding a bug, opened an issue, getting no response, troubleshoot myself, fixed the issue myself, shared it by PR to the main repo hoping my efforts can help someone else during the maintainance gap.
+### Actions
 
-Yes, I'm going away. Fixes and improvements on this fork are not necessarily be merged to the main repo either. I have also started [a fork of Sunshine called Apollo](https://github.com/ClassicOldSong/Apollo) and will add useful features that will never get merged by the main repo shortly. [Apollo](https://github.com/ClassicOldSong/Apollo) and [Moonlight Noir](https://github.com/ClassicOldSong/moonlight-android) will no longer be compatible with OG Sunshine and OG Moonlight eventually, but they'll work even better with much more carefully designed features.
+Button actions are parsed in `ThorPadActivity.executeAction()`. Input actions go to the host over
+the stream; UI actions stay local on the pad.
 
-The main repo had stayed silent for 5 months, with nobody actually responding to issues, and people are getting totally no help besides the limited FAQ in their Discord server. I tried to answer issues and questions, solve problems within my ablilty but I got kicked out just for helping others.
+| `type` | Sends to host | Fields |
+|---|---|---|
+| `key` | a keystroke | `key`, optional `modifiers`: `ctrl` / `shift` / `alt` / `meta` |
+| `text` | a string typed as keystrokes | `text` |
+| `mouse` | a mouse click | `button`: `left` / `right` / `middle` |
+| `macro` | an ordered sequence | `steps`: any of the above plus `{ "type":"delay", "ms":100 }` |
+| `keyboard` | *(local)* toggles the on-screen keyboard panel | — |
+| `zoom` | *(local)* toggles the top-screen video between 1× and a scale | `scale` |
+| `settings` | *(local)* opens the on-device layout manager | — |
+| `reload` | *(local)* hot-reloads the current layout JSON | — |
 
-**PRs for feature improvements are welcomed here unlike the main repo, your ideas are more likely to be appreciated and your efforts are actually being respected. We welcome people who can and willing to share their efforts, helping yourselves and other people in need.**
+> Note: `text` is delivered as real key events rather than `sendUtf8Text`, because some hosts
+> (e.g. Sunshine on macOS) don't honor UTF-8 text packets — so it is keyboard-layout sensitive.
 
-**Update**: They have contacted me and apologized for this incident, but the fact it **happened** still motivated me to start my own fork.
+## Editing layouts
 
-## Downloads
-* [Download APK directly](https://github.com/ClassicOldSong/moonlight-android/releases)
-* [Use Obtainium](https://apps.obtainium.imranr.dev/redirect?r=obtainium://app/%7B%22id%22%3A%22com.limelight.noir%22%2C%22url%22%3A%22https%3A%2F%2Fgithub.com%2FClassicOldSong%2Fmoonlight-android%22%2C%22author%22%3A%22ClassicOldSong%22%2C%22name%22%3A%22Artemis%22%2C%22additionalSettings%22%3A%22%7B%5C%22apkFilterRegEx%5C%22%3A%5C%22nonRoot%5C%22%2C%5C%22matchGroutToUse%5C%22%3A%5C%22%241%5C%22%2C%5C%22versionExtractionRegEx%5C%22%3A%5C%22v(.%2B)%5C%22%7D%22%7D) (recommended)
+**On the device** — bind a button to `{ "action": { "type": "settings" } }` (or use the built-in
+default pad) to open [ThorPadSettingsActivity](app/src/main/java/com/limelight/ThorPadSettingsActivity.java):
+list / create-per-app / edit / save-and-hot-reload / delete layout files. Good for quick
+on-the-couch tweaks.
 
-## Building
-* Install Android Studio and the Android NDK
-* Run ‘git submodule update --init --recursive’ from within moonlight-android/
-* In moonlight-android/, create a file called ‘local.properties’. Add an ‘ndk.dir=’ property to the local.properties file and set it equal to your NDK directory.
-* Build the APK using Android Studio or gradle
+**On a computer** — the richer drag-and-drop builder is the web tool in
+[tools/thorpad-webui/](tools/thorpad-webui/). It's a zero-dependency HTML/CSS/JS page: just open
+`index.html`, lay out trackpads and buttons visually, and export the exact JSON the app reads.
+See [its README](tools/thorpad-webui/README.md).
 
-## Authors
+## Build & run
 
-* [Cameron Gutman](https://github.com/cgutman)  
-* [Diego Waxemberg](https://github.com/dwaxemberg)  
-* [Aaron Neyer](https://github.com/Aaronneyer)  
-* [Andrew Hennessy](https://github.com/yetanothername)
+Toolchain (JDK 17 + Android SDK/NDK) is configured for development on the Thor. Convenience
+deploy scripts are at the repo root:
 
-Moonlight is the work of students at [Case Western](http://case.edu) and was
-started as a project at [MHacks](http://mhacks.org).
+```bash
+# Build, install, and launch Hati on a connected Thor
+./deploy-hati.sh
+
+# Or build the APK directly
+./gradlew assembleNonRoot_gameDebug
+#   → app/build/outputs/apk/nonRoot_game/debug/app-nonRoot_game-arm64-v8a-debug.apk
+```
+
+- **applicationId:** `dev.codinghaze.hati` (debug builds add a `.debug` suffix). The launcher
+  Activity is still `com.limelight.PcView`.
+- [deploy-artemis.sh](deploy-artemis.sh) builds/installs upstream Artemis side-by-side for
+  comparison.
+- Release signing is optional: drop a gitignored `keystore.properties` (with `storeFile` /
+  `storePassword` / `keyAlias` / `keyPassword`) at the repo root and release builds get signed;
+  without it they're simply unsigned.
+
+To use it: pair Hati with your Apollo / Sunshine / Lumen host, start a stream on the top screen,
+and the ThorPad pad appears on the bottom screen.
+
+## Roadmap
+
+ThorPad actions currently dispatch **input** to the host. Launching scripts / apps / URLs on the
+host (e.g. a "Web" button that opens a browser) is designed in
+[docs/host-actions-design.md](docs/host-actions-design.md) — it proposes reusing Moonlight's
+non-input control channel rather than brittle keystroke macros.
+
+---
+
+## Inherited from Artemis
+
+Hati keeps everything Artemis (Moonlight Noir) offers on the top screen, including:
+
+- Custom virtual buttons with import/export, custom resolutions, bitrates, and frame-rate handling.
+- Multiple mouse modes (normal, multi-touch, touchpad, local cursor) with sensitivity/space tuning.
+- Optimized virtual gamepad skins, free joystick, Joycon D-pad support, device-motor rumble.
+- External-monitor mode, display-on-top mode, portrait mode, in-game rotate, and Fit/Fill/Stretch scaling.
+- View pan/zoom, trackpad tap/scroll, natural-trackpad mode, non-QWERTY layouts, soft-keyboard switching.
+- Virtual Display, Server Command, and clipboard-sync integration with [Apollo](https://github.com/ClassicOldSong/Apollo).
+- SBS 3D for external displays, a back-menu, custom shortcut commands, and a gamepad debugging page.
+
+For the full upstream feature list and project background, see the
+[Artemis README](https://github.com/ClassicOldSong/moonlight-android).
+
+## Credits & license
+
+Hati is GPL-3.0, the same as its upstreams. It builds on the work of:
+
+- **Moonlight** — the original open-source GameStream client, by students at Case Western
+  ([Cameron Gutman](https://github.com/cgutman), [Diego Waxemberg](https://github.com/dwaxemberg),
+  [Aaron Neyer](https://github.com/Aaronneyer), [Andrew Hennessy](https://github.com/yetanothername)).
+- **Artemis / Moonlight Noir** by [ClassicOldSong](https://github.com/ClassicOldSong) — the direct upstream.
+
+Full attribution and the list of changes Hati makes are in [NOTICE.md](NOTICE.md).
