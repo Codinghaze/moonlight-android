@@ -13,6 +13,8 @@ import android.os.Looper;
 import android.util.TypedValue;
 import android.view.Gravity;
 import android.view.HapticFeedbackConstants;
+import android.view.InputDevice;
+import android.view.KeyEvent;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewConfiguration;
@@ -26,6 +28,7 @@ import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
 
+import com.limelight.binding.input.ControllerHandler;
 import com.limelight.nvstream.NvConnection;
 import com.limelight.nvstream.input.KeyboardPacket;
 import com.limelight.nvstream.input.MouseButtonPacket;
@@ -137,6 +140,54 @@ public class ThorPadActivity extends AppCompatActivity {
 
     private NvConnection conn() {
         return Game.instance != null ? Game.instance.conn : null;
+    }
+
+    // ----------------------------------------------------------------------
+    // Physical controller pass-through
+    //
+    // ThorPad lives on the Thor's BOTTOM screen. As soon as you touch it, this
+    // window takes input focus away from the streaming Game activity on the TOP
+    // screen — so Android starts routing physical gamepad/joystick events here
+    // and the game stops receiving them ("top screen loses game controls").
+    //
+    // Touch is for the pad; a physical controller is always meant for the game.
+    // So we intercept controller events here and forward them straight into the
+    // Game activity's existing input handlers (it stays input-grabbed the whole
+    // time), keeping the stream fully controllable without bouncing window focus.
+    // ----------------------------------------------------------------------
+
+    @Override
+    public boolean dispatchKeyEvent(KeyEvent event) {
+        // Only forward real game-controller buttons. System keys (Back, volume)
+        // and the on-screen keyboard fall through to normal handling below.
+        if (Game.instance != null
+                && ControllerHandler.isGameControllerDevice(event.getDevice())) {
+            switch (event.getAction()) {
+                case KeyEvent.ACTION_DOWN:
+                    if (Game.instance.handleKeyDown(event)) return true;
+                    break;
+                case KeyEvent.ACTION_UP:
+                    if (Game.instance.handleKeyUp(event)) return true;
+                    break;
+                case KeyEvent.ACTION_MULTIPLE:
+                    if (Game.instance.handleKeyMultiple(event)) return true;
+                    break;
+            }
+        }
+        return super.dispatchKeyEvent(event);
+    }
+
+    @Override
+    public boolean onGenericMotionEvent(MotionEvent event) {
+        // Joystick sticks / triggers / D-pad hat arrive here. Forward them to the
+        // game; touch events (SOURCE_TOUCHSCREEN) never hit this path, so the pad
+        // keeps working normally.
+        if (Game.instance != null
+                && (event.getSource() & InputDevice.SOURCE_CLASS_JOYSTICK) != 0
+                && Game.instance.handleMotionEvent(null, event)) {
+            return true;
+        }
+        return super.onGenericMotionEvent(event);
     }
 
     // ----------------------------------------------------------------------
