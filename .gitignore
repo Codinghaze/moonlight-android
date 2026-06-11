@@ -51,3 +51,6 @@ AGENTS.md
 keystore.properties
 *.jks
 *.keystore
+
+# Transient on-device ThorPad layout backups (deploy-hati.sh)
+.thorpad-backup/

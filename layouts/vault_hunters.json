@@ -1,0 +1,27 @@
+{
+  "name": "Vault Hunters",
+  "trackpadSensitivity": 1.4,
+  "elements": [
+    { "type": "trackpad", "x": 0, "y": 0, "w": 1, "h": 0.5 },
+
+    { "type": "button", "x": 0.033, "y": 0.54, "w": 0.16, "h": 0.18,
+      "label": "1", "action": { "type": "key", "key": "1" } },
+    { "type": "button", "x": 0.227, "y": 0.54, "w": 0.16, "h": 0.18,
+      "label": "2", "action": { "type": "key", "key": "2" } },
+    { "type": "button", "x": 0.42, "y": 0.54, "w": 0.16, "h": 0.18,
+      "label": "⌨️", "action": { "type": "keyboard" } },
+    { "type": "button", "x": 0.613, "y": 0.54, "w": 0.16, "h": 0.18,
+      "label": "3", "action": { "type": "key", "key": "3" } },
+    { "type": "button", "x": 0.807, "y": 0.54, "w": 0.16, "h": 0.18,
+      "label": "4", "action": { "type": "key", "key": "4" } },
+
+    { "type": "button", "x": 0.056, "y": 0.78, "w": 0.18, "h": 0.18,
+      "label": "❤️", "action": { "type": "key", "key": "c" } },
+    { "type": "button", "x": 0.292, "y": 0.78, "w": 0.18, "h": 0.18,
+      "label": "🚀", "action": { "type": "key", "key": "z" } },
+    { "type": "button", "x": 0.528, "y": 0.78, "w": 0.18, "h": 0.18,
+      "label": "🔥", "action": { "type": "key", "key": "f" } },
+    { "type": "button", "x": 0.764, "y": 0.78, "w": 0.18, "h": 0.18,
+      "label": "⛏️", "action": { "type": "key", "key": "x" } }
+  ]
+}
