@@ -7,6 +7,7 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Color;
 import android.graphics.drawable.BitmapDrawable;
+import android.graphics.drawable.GradientDrawable;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
@@ -53,6 +54,12 @@ import java.io.IOException;
  *   { "type":"trackpad", "x":0, "y":0, "w":0.78, "h":1 }
  *   { "type":"button", "x":0.8, "y":0.02, "w":0.18, "h":0.22,
  *     "label":"A", "action":{ "type":"key", "key":"A" } }
+ *
+ * Buttons take optional styling (all default to the previous look):
+ *   "color":"#1F2335"   fill color (hex or named, e.g. "red")
+ *   "textColor":"#C0CAF5"   label color
+ *   "fontSize":20       label text size in sp
+ *   "radius":0|1|2|3    corner roundness (0 = square, 3 = most round)
  *
  * Actions: key (+modifiers) | text | mouse | macro (sequence with delays).
  */
@@ -350,8 +357,7 @@ public class ThorPadActivity extends AppCompatActivity {
                 pad.setOnTouchListener(new TrackpadListener(touchSlop, trackpadSensitivity));
                 view = pad;
             } else if ("button".equals(type)) {
-                view = makeButton(el.optString("label", ""), el.optString("icon", ""),
-                        el.optJSONObject("action"));
+                view = makeButton(el);
             }
 
             if (view != null) {
@@ -360,13 +366,30 @@ public class ThorPadActivity extends AppCompatActivity {
         }
     }
 
-    private Button makeButton(String label, String icon, final JSONObject action) {
+    private Button makeButton(final JSONObject el) {
+        String label = el.optString("label", "");
+        String icon = el.optString("icon", "");
+        final JSONObject action = el.optJSONObject("action");
+
         Button b = new Button(this);
         b.setText(label);                       // emoji works here directly, e.g. "🔊"
         b.setAllCaps(false);
-        b.setTextSize(TypedValue.COMPLEX_UNIT_SP, 20);
-        b.setTextColor(Color.parseColor("#C0CAF5"));
-        b.setBackgroundColor(Color.parseColor("#1F2335"));
+
+        // Optional styling (all have sensible defaults so old layouts are unchanged):
+        //   "fontSize": 20            text size in sp
+        //   "textColor": "#C0CAF5"    label color (hex or named, e.g. "red")
+        //   "color": "#1F2335"        button fill color
+        //   "radius": 0|1|2|3         corner roundness (0 = square, 3 = most round)
+        b.setTextSize(TypedValue.COMPLEX_UNIT_SP,
+                (float) el.optDouble("fontSize", el.optDouble("textSize", 20)));
+        b.setTextColor(parseColorOr(el.optString("textColor", ""), Color.parseColor("#C0CAF5")));
+
+        GradientDrawable bg = new GradientDrawable();
+        bg.setShape(GradientDrawable.RECTANGLE);
+        bg.setColor(parseColorOr(el.optString("color", ""), Color.parseColor("#1F2335")));
+        bg.setCornerRadius(radiusPx(el.optInt("radius", 0)));
+        b.setBackground(bg);
+
         // Optional image icon: a file in the thorpad/ folder (e.g. "icon":"steam.png").
         if (icon != null && !icon.isEmpty()) {
             File f = new File(new File(getExternalFilesDir(null), "thorpad"), icon);
@@ -689,6 +712,28 @@ public class ThorPadActivity extends AppCompatActivity {
     private int dp(int v) {
         return Math.round(TypedValue.applyDimension(
                 TypedValue.COMPLEX_UNIT_DIP, v, getResources().getDisplayMetrics()));
+    }
+
+    /** Corner radius "level" → pixels. 0 = square; 1/2/3 (and up) get progressively rounder. */
+    private float radiusPx(int level) {
+        return level <= 0 ? 0f : dp(8 * level);
+    }
+
+    /** Parse "#RRGGBB", "RRGGBB", or a named color ("red"); fall back if blank/invalid. */
+    private static int parseColorOr(String s, int fallback) {
+        if (s == null || s.isEmpty()) {
+            return fallback;
+        }
+        try {
+            return Color.parseColor(s.charAt(0) == '#' ? s : "#" + s);
+        } catch (IllegalArgumentException e) {
+            // Not a hex string — try a named color (e.g. "red", "cyan").
+            try {
+                return Color.parseColor(s.toLowerCase());
+            } catch (IllegalArgumentException e2) {
+                return fallback;
+            }
+        }
     }
 
     // ----------------------------------------------------------------------
