@@ -47,3 +47,7 @@ app/.externalNativeBuild/
 
 # agent files
 AGENTS.md
+# Hati release signing (keep private!)
+keystore.properties
+*.jks
+*.keystore

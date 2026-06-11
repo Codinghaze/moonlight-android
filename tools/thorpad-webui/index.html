@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ThorPad Layout Designer</title>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<header class="topbar">
+  <div class="title">ThorPad Layout Designer</div>
+  <div class="topbar-fields">
+    <label>Name <input type="text" id="layoutName" value="default"></label>
+    <label>Trackpad Sensitivity <input type="number" id="trackpadSensitivity" step="0.1" min="0" value="1.4"></label>
+    <label class="chk"><input type="checkbox" id="snapToggle"> Snap to grid</label>
+  </div>
+  <div class="topbar-actions">
+    <div class="menu">
+      <button id="templatesBtn">Templates &#9662;</button>
+      <ul class="menu-list" id="templatesMenu">
+        <li data-template="default">Default A/B/C/D</li>
+        <li data-template="mac">Mac desktop</li>
+        <li data-template="blank">Blank (trackpad only)</li>
+      </ul>
+    </div>
+    <button id="addTrackpadBtn">+ Trackpad</button>
+    <button id="addButtonBtn">+ Button</button>
+    <button id="importBtn">Import</button>
+    <button id="exportBtn" class="primary">Export</button>
+  </div>
+</header>
+
+<main class="layout">
+  <!-- CANVAS -->
+  <section class="canvas-wrap">
+    <div class="canvas-shell">
+      <div id="canvas" class="canvas">
+        <!-- elements injected here -->
+      </div>
+    </div>
+    <div class="canvas-hint">Bottom screen of AYN Thor &middot; 1240 &times; 1080 &middot; drag to move, drag corner to resize</div>
+    <div id="warnings" class="warnings"></div>
+  </section>
+
+  <!-- PROPERTIES -->
+  <aside class="props" id="props">
+    <div class="props-empty" id="propsEmpty">Select an element to edit its properties, or add one from the toolbar above.</div>
+    <div class="props-body" id="propsBody" hidden>
+      <div class="props-head">
+        <span id="propType" class="badge">button</span>
+        <button id="deleteBtn" class="danger">Delete</button>
+      </div>
+
+      <div class="grid2">
+        <label>x <input type="number" id="propX" step="0.001" min="0" max="1"></label>
+        <label>y <input type="number" id="propY" step="0.001" min="0" max="1"></label>
+        <label>w <input type="number" id="propW" step="0.001" min="0" max="1"></label>
+        <label>h <input type="number" id="propH" step="0.001" min="0" max="1"></label>
+      </div>
+
+      <div id="buttonProps">
+        <label class="full">Label <input type="text" id="propLabel"></label>
+
+        <fieldset class="action-editor">
+          <legend>Action</legend>
+          <label class="full">Type
+            <select id="actionType">
+              <option value="key">key</option>
+              <option value="text">text</option>
+              <option value="mouse">mouse</option>
+              <option value="macro">macro</option>
+            </select>
+          </label>
+
+          <!-- KEY -->
+          <div class="action-pane" id="pane-key">
+            <label class="full">Key
+              <select id="keySelect"></select>
+            </label>
+            <div class="mods">
+              <label class="chk"><input type="checkbox" class="mod" value="shift"> shift</label>
+              <label class="chk"><input type="checkbox" class="mod" value="ctrl"> ctrl</label>
+              <label class="chk"><input type="checkbox" class="mod" value="alt"> alt</label>
+              <label class="chk"><input type="checkbox" class="mod" value="meta"> meta</label>
+            </div>
+          </div>
+
+          <!-- TEXT -->
+          <div class="action-pane" id="pane-text" hidden>
+            <label class="full">Text <input type="text" id="actionText" placeholder="hello world"></label>
+          </div>
+
+          <!-- MOUSE -->
+          <div class="action-pane" id="pane-mouse" hidden>
+            <label class="full">Button
+              <select id="mouseButton">
+                <option value="left">left</option>
+                <option value="right">right</option>
+                <option value="middle">middle</option>
+              </select>
+            </label>
+          </div>
+
+          <!-- MACRO -->
+          <div class="action-pane" id="pane-macro" hidden>
+            <div id="macroSteps" class="macro-steps"></div>
+            <div class="macro-add">
+              <select id="macroAddType">
+                <option value="key">key</option>
+                <option value="text">text</option>
+                <option value="mouse">mouse</option>
+                <option value="delay">delay</option>
+              </select>
+              <button id="macroAddBtn" type="button">+ Add step</button>
+            </div>
+          </div>
+        </fieldset>
+      </div>
+    </div>
+  </aside>
+
+  <!-- JSON -->
+  <aside class="json-pane">
+    <div class="json-head">JSON preview</div>
+    <textarea id="jsonView" spellcheck="false" readonly></textarea>
+  </aside>
+</main>
+
+<!-- Import modal -->
+<div class="modal" id="importModal" hidden>
+  <div class="modal-box">
+    <h3>Import layout JSON</h3>
+    <textarea id="importText" spellcheck="false" placeholder="Paste JSON here..."></textarea>
+    <div class="modal-row">
+      <input type="file" id="importFile" accept="application/json,.json">
+      <div class="spacer"></div>
+      <button id="importCancel">Cancel</button>
+      <button id="importConfirm" class="primary">Load</button>
+    </div>
+    <div class="import-err" id="importErr"></div>
+  </div>
+</div>
+
+<script src="app.js"></script>
+</body>
+</html>

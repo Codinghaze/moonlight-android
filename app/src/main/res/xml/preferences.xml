@@ -4,6 +4,12 @@
     xmlns:seekbar="http://schemas.moonlight-stream.com/apk/res/seekbar"
     app:iconSpaceReserved="false">
 
+    <Preference
+        android:key="thorpad_layouts"
+        android:title="ThorPad layouts (bottom screen)"
+        android:summary="Edit the bottom-screen control pad — add per-app layouts, buttons, macros"
+        app:iconSpaceReserved="false" />
+
     <PreferenceCategory
         android:key="category_video_settings"
         android:title="@string/category_video_settings"

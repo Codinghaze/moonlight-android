@@ -170,4 +170,26 @@ public class PanZoomHandler {
     public float getScaleFactor() { return scaleFactor; }
     public float getChildX() { return childX; }
     public float getChildY() { return childY; }
+
+    /**
+     * Programmatic zoom to a target scale, centered. Mirrors the pinch math in
+     * ScaleListener so it behaves identically. Used by ThorPad's Zoom button.
+     */
+    public void zoomToCenter(float targetScale) {
+        targetScale = Math.max(1f, Math.min(targetScale, MAX_SCALE));
+        updateDimensions();
+        float focusX = parentWidth / 2f;
+        float focusY = parentHeight / 2f;
+        float oldScale = scaleFactor <= 0 ? 1f : scaleFactor;
+
+        childX = focusX + (childX - focusX) / oldScale * targetScale;
+        childY = focusY + (childY - focusY) / oldScale * targetScale;
+        scaleFactor = targetScale;
+
+        streamView.setScaleX(scaleFactor);
+        streamView.setScaleY(scaleFactor);
+        streamView.setX(childX);
+        streamView.setY(childY);
+        constrainToBounds();
+    }
 }

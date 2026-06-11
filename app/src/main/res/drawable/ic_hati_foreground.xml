@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Hati launcher icon foreground: a crescent moon (the moon Hati chases).
+     108x108 adaptive viewport; the moon sits within the centered safe zone.
+     The crescent is the area inside the outer circle but outside the offset
+     inner circle (evenOdd fill). -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <path
+        android:fillColor="#E8ECFF"
+        android:fillType="evenOdd"
+        android:pathData="M50,54 m-30,0 a30,30 0 1,0 60,0 a30,30 0 1,0 -60,0 Z M64,47 m-26,0 a26,26 0 1,0 52,0 a26,26 0 1,0 -52,0 Z" />
+</vector>

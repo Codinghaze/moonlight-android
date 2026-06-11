@@ -61,6 +61,7 @@ import android.app.Service;
 import android.content.ClipData;
 import android.content.ClipDescription;
 import android.content.ClipboardManager;
+import android.app.ActivityOptions;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
@@ -832,6 +833,10 @@ public class Game extends AppCompatActivity implements SurfaceHolder.Callback,
             // The mouse mode preference is also read in PreferenceConfiguration to set the boolean flags
             initMouseMode();
         }
+
+        // ThorPad: when streaming on the primary (top) screen, mirror a control pad
+        // onto the Thor's bottom screen (secondary display).
+        maybeLaunchThorPad();
 
         if (prefConfig.onscreenController) {
             // create virtual onscreen controller
@@ -3436,6 +3441,35 @@ public class Game extends AppCompatActivity implements SurfaceHolder.Callback,
     public void stageComplete(String stage) {
     }
 
+    // ThorPad: launch the bottom-screen control pad on the Thor's secondary display.
+    // Only runs when the stream is on the primary (top) screen — if the video itself
+    // is on the external display we don't want a pad.
+    private void maybeLaunchThorPad() {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) {
+            return;
+        }
+        if (onExternelDisplay) {
+            return;
+        }
+        Display secondary = ServerHelper.getSecondaryDisplay(this);
+        if (secondary == null) {
+            LimeLog.info("ThorPad: no secondary display, skipping control pad");
+            return;
+        }
+        try {
+            Intent intent = new Intent(this, ThorPadActivity.class);
+            intent.putExtra(ThorPadActivity.EXTRA_APP_NAME, appName);
+            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_MULTIPLE_TASK);
+            Bundle opts = ActivityOptions.makeBasic()
+                    .setLaunchDisplayId(secondary.getDisplayId())
+                    .toBundle();
+            startActivity(intent, opts);
+            LimeLog.info("ThorPad: launched control pad on display " + secondary.getDisplayId());
+        } catch (Exception e) {
+            LimeLog.warning("ThorPad: failed to launch control pad: " + e);
+        }
+    }
+
     private void stopConnection() {
         if (connecting || connected) {
             connecting = connected = false;
@@ -3989,6 +4023,16 @@ public class Game extends AppCompatActivity implements SurfaceHolder.Callback,
     public boolean isZoomModeEnabled() {
         return isPanZoomMode;
     }
+
+    /** ThorPad zoom button: snap the top-screen video between 1x and the given scale. */
+    public void thorZoomToggle(float scale) {
+        if (panZoomHandler == null) {
+            return;
+        }
+        float target = panZoomHandler.getScaleFactor() > 1.05f ? 1f : scale;
+        panZoomHandler.zoomToCenter(target);
+    }
+
     public void toggleZoomMode() {
         this.isPanZoomMode = !this.isPanZoomMode;
         if (this.isPanZoomMode) {

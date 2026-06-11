@@ -336,6 +336,15 @@ public class StreamSettings extends AppCompatActivity {
             addPreferencesFromResource(R.xml.preferences);
             PreferenceScreen screen = getPreferenceScreen();
 
+            // ThorPad bottom-screen layout manager — reachable from the main app's settings.
+            Preference thorPadPref = findPreference("thorpad_layouts");
+            if (thorPadPref != null) {
+                thorPadPref.setOnPreferenceClickListener(p -> {
+                    startActivity(new Intent(getActivity(), com.limelight.ThorPadSettingsActivity.class));
+                    return true;
+                });
+            }
+
             AppCompatActivity activity = (AppCompatActivity) requireActivity();
             PackageManager pm = activity.getPackageManager();
 

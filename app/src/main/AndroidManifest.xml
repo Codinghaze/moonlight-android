@@ -161,6 +161,27 @@
             android:launchMode="singleInstance"
             android:taskAffinity=""
             android:theme="@style/ExternalDisplayControllerTheme"/>
+
+        <!-- ThorPad: control pad shown on the Thor's bottom screen. Uses standard
+             launch mode + empty task affinity so setLaunchDisplayId is honored on
+             the secondary display. -->
+        <activity android:name=".ThorPadActivity"
+            android:exported="false"
+            android:configChanges="mcc|mnc|locale|touchscreen|keyboard|keyboardHidden|navigation|screenLayout|fontScale|uiMode|orientation|screenSize|smallestScreenSize|layoutDirection"
+            android:excludeFromRecents="true"
+            android:launchMode="standard"
+            android:taskAffinity=""
+            android:theme="@style/ExternalDisplayControllerTheme"/>
+
+        <!-- ThorPad settings / layout manager. Empty taskAffinity keeps it in the
+             pad's task so it opens on the bottom screen, not over the video. -->
+        <activity android:name=".ThorPadSettingsActivity"
+            android:exported="false"
+            android:configChanges="orientation|screenSize|screenLayout|keyboardHidden|smallestScreenSize|density"
+            android:excludeFromRecents="true"
+            android:launchMode="standard"
+            android:taskAffinity=""
+            android:theme="@style/SettingsTheme"/>
         <activity
             android:name=".preferences.StreamSettings"
             android:resizeableActivity="true"

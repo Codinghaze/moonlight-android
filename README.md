@@ -1,4 +1,21 @@
-# Artemis Android
+# Hati 🐺🌙
+
+**Hati** is a dual-screen game-streaming client for the **AYN Thor** handheld. The game/desktop
+streams on the top screen, while the bottom touchscreen becomes a fully customizable control pad —
+a trackpad, macro buttons, an on-screen keyboard, and per-app JSON layouts. Named for the Norse
+wolf that forever chases the moon (Máni) across the sky.
+
+Hati is a fork of **[Artemis](https://github.com/ClassicOldSong/moonlight-android)** (a.k.a. Moonlight
+Noir) by ClassicOldSong, which is itself a fork of **[Moonlight](https://github.com/moonlight-stream/moonlight-android)**.
+It is distributed under the **GPL-3.0** license, the same as its upstreams. Full credit to the
+Moonlight and Artemis projects — see [NOTICE.md](NOTICE.md).
+
+Pair it with [Apollo](https://github.com/ClassicOldSong/Apollo) / [Sunshine](https://github.com/LizardByte/Sunshine)
+(or compatible forks like Lumen) on your host PC/Mac.
+
+---
+
+## Upstream: Artemis Android
 
 Previously named Moonlight Noir
 
